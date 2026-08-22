@@ -1,13 +1,14 @@
 /* ==========================================================================
-   GlobeTrotter Dashboard & Home View
+   GlobeTrotter Dashboard & Home View (with AI Recommendations Engine)
    ========================================================================== */
 
 import { db } from '../db.js';
+import { getRecommendedCities, renderRecommendationBadge } from '../services/recommendations.js';
 
 export function renderDashboardView() {
   const user = db.getCurrentUser();
   const trips = db.getTrips();
-  const cities = db.getCities().slice(0, 4);
+  const recommendedCities = getRecommendedCities(4);
 
   const totalTrips = trips.length;
   const upcomingTrips = trips.filter(t => t.status === 'Upcoming');
@@ -22,7 +23,7 @@ export function renderDashboardView() {
       <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1.5rem; position: relative; z-index: 2;">
         <div>
           <span class="badge badge-accent" style="margin-bottom: 0.75rem;"><i class="fa-solid fa-sparkles"></i> Welcome Back</span>
-          <h1 style="font-size: 2.25rem; font-weight: 800; color: #ffffff; margin-bottom: 0.5rem;">Good morning, ${user.name}!</h1>
+          <h1 style="font-size: 2.25rem; font-weight: 800; color: #ffffff; margin-bottom: 0.5rem;">Good morning, ${user ? user.name : 'Explorer'}!</h1>
           <p style="color: #cbd5e1; font-size: 1.05rem;">Where are you traveling next?</p>
         </div>
         <a href="#/create-trip" class="btn btn-primary btn-lg">
@@ -76,8 +77,40 @@ export function renderDashboardView() {
       </div>
     </div>
 
-    <!-- Upcoming Trips Section -->
+    <!-- AI Personalized Recommendations Section -->
     <div style="margin-bottom: 3rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
+        <div>
+          <h2 style="font-size: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--accent);"></i> AI Recommended Destinations
+          </h2>
+          <p style="color: var(--text-muted); font-size: 0.875rem;">Tailored for your travel style and budget preferences</p>
+        </div>
+        <a href="#/discover-cities" class="btn btn-outline btn-sm">Explore All Destinations</a>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem;">
+        ${recommendedCities.map(city => `
+          <div class="destination-card">
+            <img src="${city.image}" alt="${city.name}" class="destination-img">
+            <div class="destination-overlay">
+              <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                ${renderRecommendationBadge(city.matchPercent)}
+                <span class="badge badge-accent">${city.cost_index}</span>
+              </div>
+              <h3 style="font-size: 1.35rem; color: #ffffff;">${city.name}</h3>
+              <p style="font-size: 0.8rem; color: #e2e8f0; margin-bottom: 1rem;">${city.country} • ${city.region}</p>
+              <a href="#/discover-cities" class="btn btn-outline btn-sm" style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); color: white;">
+                View Details
+              </a>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- Upcoming Trips Section -->
+    <div>
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
         <div>
           <h2 style="font-size: 1.5rem;">Upcoming Itineraries</h2>
@@ -127,33 +160,6 @@ export function renderDashboardView() {
             </div>
           `;
         }).join('')}
-      </div>
-    </div>
-
-    <!-- Recommended Destinations -->
-    <div>
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;">
-        <div>
-          <h2 style="font-size: 1.5rem;">Recommended Destinations</h2>
-          <p style="color: var(--text-muted); font-size: 0.875rem;">Popular cities for your next getaway</p>
-        </div>
-        <a href="#/discover-cities" class="btn btn-outline btn-sm">Explore All Destinations</a>
-      </div>
-
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem;">
-        ${cities.map(city => `
-          <div class="destination-card">
-            <img src="${city.image}" alt="${city.name}" class="destination-img">
-            <div class="destination-overlay">
-              <span class="badge badge-accent" style="width: fit-content; margin-bottom: 0.5rem;">${city.cost_index} • ★ ${city.popularity}</span>
-              <h3 style="font-size: 1.35rem; color: #ffffff;">${city.name}</h3>
-              <p style="font-size: 0.8rem; color: #e2e8f0; margin-bottom: 1rem;">${city.country}</p>
-              <a href="#/discover-cities" class="btn btn-outline btn-sm" style="background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); color: white;">
-                View Details
-              </a>
-            </div>
-          </div>
-        `).join('')}
       </div>
     </div>
   `;
