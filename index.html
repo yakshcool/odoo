@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GlobeTrotter | Plan Your Next Adventure</title>
+    <meta name="description" content="Personalized travel planning application. Create customized multi-city itineraries with ease.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" id="main-sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-earth-americas"></i>
+                <span>GlobeTrotter</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" data-route="dashboard" class="active"><i class="fa-solid fa-house"></i> Dashboard</a></li>
+                <li><a href="#" data-route="my-trips"><i class="fa-solid fa-plane"></i> My Trips</a></li>
+                <li><a href="#" data-route="create-trip" class="btn-primary-outline"><i class="fa-solid fa-plus"></i> New Trip</a></li>
+                <li><a href="#" data-route="city-search"><i class="fa-solid fa-magnifying-glass-location"></i> Explore Cities</a></li>
+                <li><a href="#" data-route="public-itinerary"><i class="fa-solid fa-share-nodes"></i> Shared Trips</a></li>
+                <li><a href="#" data-route="admin-dashboard"><i class="fa-solid fa-chart-line"></i> Analytics</a></li>
+            </ul>
+            <div class="user-profile-widget" style="cursor: pointer;" onclick="navigate('profile')">
+                <img src="https://i.pravatar.cc/150?img=68" alt="User Avatar" class="avatar">
+                <div class="user-info">
+                    <span class="name">Alex Traveler</span>
+                    <span class="status">Explorer</span>
+                </div>
+                <button class="settings-btn" title="Settings" onclick="event.stopPropagation(); navigate('profile')"><i class="fa-solid fa-gear"></i></button>
+            </div>
+            <button class="btn btn-primary-outline" style="margin-top: 16px; width: 100%; border:none; color: var(--text-muted);" onclick="navigate('login')">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content" id="app-root">
+            <!-- Views will be injected here via app.js -->
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/app.js"></script>
+</body>
+</html>
