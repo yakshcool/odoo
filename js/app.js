@@ -1,10 +1,13 @@
 /* ==========================================================================
-   GlobeTrotter SPA Main Application & Client Router
+   GlobeTrotter SPA Main Application & Client Router (with AI Chatbot & Supabase)
    ========================================================================== */
 
 import { db } from './db.js';
 import { renderNavbar } from './components/navbar.js';
 import { createModalHTML } from './components/modals.js';
+import { renderChatbotWidget } from './components/chatbot.js';
+import { initSupabase } from './supabase.js';
+
 import { renderAuthView } from './views/authView.js';
 import { renderDashboardView } from './views/dashboardView.js';
 import { renderCreateTripView } from './views/createTripView.js';
@@ -26,6 +29,9 @@ class GlobeTrotterApp {
   }
 
   init() {
+    // Initialize Supabase Client
+    initSupabase();
+
     // Inject modal base container once
     if (!document.getElementById('app-modal-overlay')) {
       document.body.insertAdjacentHTML('beforeend', createModalHTML());
@@ -140,6 +146,11 @@ class GlobeTrotterApp {
     }
 
     mountPoint.appendChild(viewElement);
+
+    // Mount AI Chatbot Widget globally
+    if (!document.getElementById('ai-chatbot-widget')) {
+      document.body.appendChild(renderChatbotWidget());
+    }
 
     // Theme Toggle Handler
     const themeBtn = document.getElementById('btn-theme-toggle');
