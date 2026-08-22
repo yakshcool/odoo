@@ -13,7 +13,7 @@ import {
   INITIAL_SAVED_DESTINATIONS
 } from './mockData.js';
 
-const STORAGE_KEY = 'GLOBETROTTER_DB_V1';
+const STORAGE_KEY = 'GLOBETROTTER_DB_V2';
 
 class LocalDatabase {
   constructor() {
@@ -55,7 +55,7 @@ class LocalDatabase {
       itineraryActivities: [...INITIAL_ITINERARY_ACTIVITIES],
       expenses: [...INITIAL_EXPENSES],
       savedDestinations: [...INITIAL_SAVED_DESTINATIONS],
-      currentUser: INITIAL_USER
+      currentUser: null // Guest mode by default; prompts sign in / sign up
     };
     this.save();
   }
@@ -66,7 +66,7 @@ class LocalDatabase {
 
   // --- Auth & User ---
   getCurrentUser() {
-    return this.data.currentUser || INITIAL_USER;
+    return this.data.currentUser || null;
   }
 
   setCurrentUser(user) {
@@ -78,6 +78,11 @@ class LocalDatabase {
     this.data.currentUser = INITIAL_USER;
     this.save();
     return INITIAL_USER;
+  }
+
+  logout() {
+    this.data.currentUser = null;
+    this.save();
   }
 
   // --- Cities ---
@@ -110,9 +115,10 @@ class LocalDatabase {
   }
 
   createTrip(tripData) {
+    const user = this.getCurrentUser();
     const newTrip = {
       id: `trip-${Date.now()}`,
-      user_id: this.getCurrentUser().id,
+      user_id: user ? user.id : 'user-guest',
       name: tripData.name || "Untitled Trip",
       description: tripData.description || "",
       cover_image: tripData.cover_image || "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=80",
@@ -250,7 +256,6 @@ class LocalDatabase {
     };
     this.data.tripStops.push(newStop);
 
-    // Update trip end date if extended
     if (new Date(depDate) > new Date(trip.end_date)) {
       trip.end_date = depDate;
     }
@@ -355,7 +360,6 @@ class LocalDatabase {
     const itinActs = this.getItineraryActivitiesForTrip(tripId);
     let totalActSum = itinActs.reduce((acc, curr) => acc + (curr.custom_cost || 0), 0);
 
-    // If there are explicit expenses, sum them with activities
     trip.estimated_cost = totalExpenseSum + (expenses.length > 0 ? 0 : totalActSum);
     this.save();
   }

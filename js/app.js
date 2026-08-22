@@ -1,11 +1,12 @@
 /* ==========================================================================
-   GlobeTrotter SPA Main Application & Client Router (with AI Chatbot & Supabase)
+   GlobeTrotter SPA Main Application & Client Router (Auth Enforcement)
    ========================================================================== */
 
 import { db } from './db.js';
 import { renderNavbar } from './components/navbar.js';
 import { createModalHTML } from './components/modals.js';
 import { renderChatbotWidget } from './components/chatbot.js';
+import { showToast } from './components/toast.js';
 import { initSupabase } from './supabase.js';
 
 import { renderAuthView } from './views/authView.js';
@@ -45,40 +46,49 @@ class GlobeTrotterApp {
   }
 
   handleRoute() {
-    const hash = window.location.hash || '#/dashboard';
+    const hash = window.location.hash || '#/auth';
     const parts = hash.replace('#/', '').split('/');
-    const mainRoute = parts[0] || 'dashboard';
+    const mainRoute = parts[0] || 'auth';
     const param = parts[1] || null;
 
-    // Public share route exception
+    // Public share route exception (viewable by anyone)
     if (mainRoute === 'trip' && param) {
       this.renderFullPage(renderSharedItineraryView(param));
       return;
     }
 
-    // Auth screen exception
+    // Auth screen route
     if (mainRoute === 'auth') {
       this.renderFullPage(renderAuthView());
       return;
     }
 
-    // Default to Auth if no user state
+    // Require Auth for all protected features: create-trip, my-trips, itinerary, budget, etc.
     const user = db.getCurrentUser();
-    if (!user && mainRoute !== 'auth') {
+    if (!user) {
+      showToast('Please sign in or create an account to start planning trips.', 'info');
       window.location.hash = '#/auth';
+      this.renderFullPage(renderAuthView());
       return;
     }
 
-    // Shell Layout with Navigation
+    // Shell Layout for Logged-In Users
     this.renderAppShell(mainRoute, param);
   }
 
   renderFullPage(viewElement) {
     this.appRoot.innerHTML = '';
     this.appRoot.appendChild(viewElement);
+    
+    // Remove chatbot widget if on full page auth
+    const botWidget = document.getElementById('ai-chatbot-widget');
+    if (botWidget && window.location.hash.includes('auth')) {
+      botWidget.style.display = 'none';
+    }
   }
 
   renderAppShell(route, param) {
+    const user = db.getCurrentUser();
     const { desktopSidebar, mobileNav } = renderNavbar(route);
 
     this.appRoot.innerHTML = `
@@ -93,9 +103,12 @@ class GlobeTrotterApp {
               <i class="fa-solid fa-moon"></i>
             </button>
             <a href="#/profile" class="btn btn-ghost btn-sm" style="gap: 0.5rem;">
-              <img src="${db.getCurrentUser().profile_image}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
-              <span style="font-weight: 600; font-size: 0.875rem;">${db.getCurrentUser().name}</span>
+              <img src="${user ? user.profile_image : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80'}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;">
+              <span style="font-weight: 600; font-size: 0.875rem;">${user ? user.name : 'Account'}</span>
             </a>
+            <button id="btn-logout-header" class="btn btn-outline btn-sm" title="Sign Out">
+              <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+            </button>
           </div>
         </header>
         <div id="content-mount"></div>
@@ -148,9 +161,12 @@ class GlobeTrotterApp {
     mountPoint.appendChild(viewElement);
 
     // Mount AI Chatbot Widget globally
-    if (!document.getElementById('ai-chatbot-widget')) {
-      document.body.appendChild(renderChatbotWidget());
+    let botWidget = document.getElementById('ai-chatbot-widget');
+    if (!botWidget) {
+      botWidget = renderChatbotWidget();
+      document.body.appendChild(botWidget);
     }
+    botWidget.style.display = 'block';
 
     // Theme Toggle Handler
     const themeBtn = document.getElementById('btn-theme-toggle');
@@ -159,6 +175,16 @@ class GlobeTrotterApp {
         const isDark = document.body.getAttribute('data-theme') === 'dark';
         document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
         themeBtn.innerHTML = `<i class="fa-solid ${isDark ? 'fa-moon' : 'fa-sun'}"></i>`;
+      };
+    }
+
+    // Logout Handler
+    const logoutBtn = document.getElementById('btn-logout-header');
+    if (logoutBtn) {
+      logoutBtn.onclick = () => {
+        db.logout();
+        showToast('Signed out successfully.', 'info');
+        window.location.hash = '#/auth';
       };
     }
   }

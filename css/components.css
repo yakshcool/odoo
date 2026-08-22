@@ -1,5 +1,5 @@
 /* ==========================================================================
-   GlobeTrotter Components Styles (with Chatbot Widget)
+   GlobeTrotter Components Styles (Fixed & Polished Layout)
    ========================================================================== */
 
 /* Buttons */
@@ -349,6 +349,45 @@
 @keyframes slideInRight {
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
+}
+
+/* MOBILE BOTTOM NAV - STRICTLY HIDDEN ON DESKTOP */
+.mobile-bottom-nav {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    display: none !important;
+  }
+  .mobile-bottom-nav {
+    display: flex !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background-color: var(--bg-sidebar);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 90;
+    justify-content: space-around;
+    align-items: center;
+  }
+
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    text-decoration: none;
+  }
+
+  .mobile-nav-item.active {
+    color: var(--primary);
+    font-weight: 600;
+  }
 }
 
 /* AI CHATBOT RIGHT SIDE PANEL */
