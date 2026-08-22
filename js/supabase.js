@@ -1,19 +1,37 @@
 /* ==========================================================================
-   GlobeTrotter Supabase Client & Database Persistence Layer
+   GlobeTrotter Supabase Client & Dynamic Connection Manager
    ========================================================================== */
 
-export const SUPABASE_URL = "https://nkp9Dn07erovNxVw.supabase.co"; 
-export const SUPABASE_ANON_KEY = "sb_publishable_Js_j_vNkp9Dn07erovNxVw_t_lDebQE";
+const SUPABASE_CONFIG_KEY = 'GLOBETROTTER_SUPABASE_CONFIG';
+
+export function getSupabaseConfig() {
+  const saved = localStorage.getItem(SUPABASE_CONFIG_KEY);
+  if (saved) {
+    try { return JSON.parse(saved); } catch (e) {}
+  }
+  return {
+    url: "https://vNkp9Dn07erovNxVw.supabase.co",
+    key: "sb_publishable_Js_j_vNkp9Dn07erovNxVw_t_lDebQE"
+  };
+}
+
+export function saveSupabaseConfig(url, key) {
+  const config = { url, key };
+  localStorage.setItem(SUPABASE_CONFIG_KEY, JSON.stringify(config));
+  initSupabase();
+  return config;
+}
 
 let supabaseClient = null;
 
 export function initSupabase() {
+  const config = getSupabaseConfig();
   if (window.supabase && typeof window.supabase.createClient === 'function') {
     try {
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      console.log("Supabase client successfully initialized with project API key.");
+      supabaseClient = window.supabase.createClient(config.url, config.key);
+      console.log("Supabase client initialized with URL:", config.url);
     } catch (e) {
-      console.warn("Supabase init note:", e);
+      console.warn("Supabase init fallback:", e);
     }
   }
   return supabaseClient;
@@ -26,7 +44,7 @@ export function getSupabase() {
   return supabaseClient;
 }
 
-// --- Supabase Authentication Methods ---
+// --- Supabase Auth Functions ---
 export async function supabaseSignUp(email, password, name) {
   const sb = getSupabase();
   if (!sb) return { user: { email, id: `user-${Date.now()}` }, error: null };
@@ -35,9 +53,7 @@ export async function supabaseSignUp(email, password, name) {
     const { data, error } = await sb.auth.signUp({
       email,
       password,
-      options: {
-        data: { full_name: name }
-      }
+      options: { data: { full_name: name } }
     });
     return { user: data?.user, error };
   } catch (err) {
@@ -63,32 +79,18 @@ export async function supabaseSignIn(email, password) {
 export async function supabaseSignOut() {
   const sb = getSupabase();
   if (sb) {
-    await sb.auth.signOut();
+    try { await sb.auth.signOut(); } catch (e) {}
   }
 }
 
-// --- Supabase Data Sync Helpers ---
-export async function fetchUserTripsFromSupabase(userId) {
+// --- Supabase Table Sync Functions ---
+export async function syncTripToSupabase(tripObj) {
   const sb = getSupabase();
-  if (!sb) return [];
-  try {
-    const { data, error } = await sb.from('trips').select('*').eq('user_id', userId);
-    if (error) throw error;
-    return data || [];
-  } catch (e) {
-    console.warn("Supabase fetch trips note:", e);
-    return [];
-  }
-}
-
-export async function saveTripToSupabase(tripObj) {
-  const sb = getSupabase();
-  if (!sb) return tripObj;
+  if (!sb) return null;
   try {
     const { data, error } = await sb.from('trips').upsert(tripObj);
-    if (error) console.warn("Supabase upsert trip note:", error);
-    return data;
+    return { data, error };
   } catch (e) {
-    console.warn("Supabase save trip note:", e);
+    return { data: null, error: e };
   }
 }
