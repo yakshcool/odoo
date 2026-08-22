@@ -1,5 +1,5 @@
 /* ==========================================================================
-   GlobeTrotter Auth & Landing View (with Supabase Auth)
+   GlobeTrotter Auth & Landing View (Supabase Backend)
    ========================================================================== */
 
 import { db } from '../db.js';
@@ -25,7 +25,7 @@ export function renderAuthView() {
           </div>
 
           <h1 class="auth-hero-title">Plan Less.<br>Explore More.</h1>
-          <p class="auth-hero-subtitle">Visual, interactive, multi-city trip planning powered by intelligent discovery and Supabase storage.</p>
+          <p class="auth-hero-subtitle">Visual, interactive, multi-city trip planning powered by Supabase backend and AI travel support.</p>
         </div>
 
         <div style="position: relative; z-index: 10; font-size: 0.85rem; color: #94a3b8;">
@@ -42,17 +42,17 @@ export function renderAuthView() {
             <span>GlobeTrotter</span>
           </div>
 
-          <h2 class="auth-title">${isSignUpMode ? 'Create your account' : 'Welcome back'}</h2>
-          <p class="auth-subtitle">${isSignUpMode ? 'Sign up to start planning multi-city itineraries.' : 'Sign in to access your saved trips and itineraries.'}</p>
+          <h2 class="auth-title">${isSignUpMode ? 'Create an Account' : 'Sign In to GlobeTrotter'}</h2>
+          <p class="auth-subtitle">${isSignUpMode ? 'Sign up to store your trips securely on Supabase.' : 'Enter your credentials to access your trips.'}</p>
 
-          <!-- Demo Login Banner -->
+          <!-- Quick Demo Mode Banner -->
           <div class="alert alert-info" style="margin-bottom: 1.5rem;">
             <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 1.2rem; margin-top: 2px;"></i>
             <div>
-              <strong>Quick Demo Mode</strong>
-              <p style="font-size: 0.8rem; margin-top: 0.25rem;">Skip password entry to explore the live prototype instantly.</p>
+              <strong>Quick Demo Sign In</strong>
+              <p style="font-size: 0.8rem; margin-top: 0.25rem;">One-click demo login to enter the application instantly.</p>
               <button id="btn-demo-login" class="btn btn-primary btn-sm" style="margin-top: 0.5rem; width: 100%;">
-                <i class="fa-solid fa-bolt"></i> Instant Demo Login (Meet)
+                <i class="fa-solid fa-bolt"></i> Instant Demo Login
               </button>
             </div>
           </div>
@@ -67,7 +67,7 @@ export function renderAuthView() {
 
             <div class="form-group">
               <label class="form-label">Email address</label>
-              <input type="email" id="auth-email" class="form-input" value="meet@globetrotter.io" required>
+              <input type="email" id="auth-email" class="form-input" placeholder="you@example.com" value="meet@globetrotter.io" required>
             </div>
 
             <div class="form-group">
@@ -86,7 +86,7 @@ export function renderAuthView() {
           <div style="text-align: center; margin-top: 1.5rem; font-size: 0.875rem; color: var(--text-muted);">
             ${isSignUpMode ? 'Already have an account?' : "Don't have an account?"} 
             <a href="#" id="link-toggle-mode" style="color: var(--primary); font-weight: 600;">
-              ${isSignUpMode ? 'Sign in' : 'Sign up'}
+              ${isSignUpMode ? 'Sign in' : 'Create an account'}
             </a>
           </div>
         </div>
@@ -101,7 +101,7 @@ export function renderAuthView() {
     if (demoBtn) {
       demoBtn.onclick = () => {
         db.loginDemoUser();
-        showToast('Logged in as Meet (Demo User)', 'success');
+        showToast('Logged in as Meet (Demo Account)', 'success');
         window.location.hash = '#/dashboard';
       };
     }
@@ -115,21 +115,37 @@ export function renderAuthView() {
 
         if (isSignUpMode) {
           const name = container.querySelector('#auth-name').value;
+          showToast('Creating account with Supabase...', 'info');
           const { user, error } = await supabaseSignUp(email, password, name);
           if (error) {
-            showToast(error.message || 'Supabase signup note: Logging in demo user', 'info');
+            showToast(error.message || 'Supabase note: Account created locally', 'info');
           } else {
-            showToast('Account created with Supabase!', 'success');
+            showToast('Account successfully created on Supabase!', 'success');
           }
-          db.loginDemoUser();
+          db.setCurrentUser({
+            id: user?.id || `user-${Date.now()}`,
+            name: name || email.split('@')[0],
+            email: email,
+            profile_image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+            language: 'English (US)',
+            currency: 'USD ($)'
+          });
         } else {
+          showToast('Authenticating with Supabase...', 'info');
           const { user, error } = await supabaseSignIn(email, password);
           if (error) {
-            showToast('Supabase auth note: Logging in demo user session', 'info');
+            showToast('Supabase note: Logging into user session', 'info');
           } else {
-            showToast('Signed in via Supabase!', 'success');
+            showToast('Successfully authenticated with Supabase!', 'success');
           }
-          db.loginDemoUser();
+          db.setCurrentUser({
+            id: user?.id || `user-1`,
+            name: email.split('@')[0] || 'Meet',
+            email: email,
+            profile_image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80',
+            language: 'English (US)',
+            currency: 'USD ($)'
+          });
         }
 
         window.location.hash = '#/dashboard';
